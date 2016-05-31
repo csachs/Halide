@@ -85,6 +85,79 @@ Stmt build_provide_loop_nest(Function f,
 
     vector<Split> splits = s.splits();
 
+    // Determine which tail strategy to use for auto splits.
+    for (Split &split : splits) {
+        if (split.tail == TailStrategy::Auto) {
+            if (split.exact) {
+                split.tail = TailStrategy::GuardWithIf;
+            } else if (is_update) {
+                split.tail = TailStrategy::RoundUp;
+            } else {
+                split.tail = TailStrategy::ShiftInwards;
+            }
+        }
+    }
+
+    // Rebalance the split tree to make the outermost split first.
+    for (size_t i = 0; i < splits.size(); i++) {
+        for (size_t j = i+1; j < splits.size(); j++) {
+
+            Split &first = splits[i];
+            Split &second = splits[j];
+            if (first.outer == second.old_var) {
+                internal_assert(!second.is_rename())
+                    << "Rename of derived variable found in splits list. This should never happen.";
+
+                if (first.is_rename()) {
+                    // Given a rename:
+                    // X -> Y
+                    // And a split:
+                    // Y -> f * Z + W
+                    // Coalesce into:
+                    // X -> f * Z + W
+                    second.old_var = first.old_var;
+                    // Drop first entirely
+                    for (size_t k = i; k < splits.size()-1; k++) {
+                        splits[k] = splits[k+1];
+                    }
+                    splits.pop_back();
+                    // Start processing this split from scratch,
+                    // because we just clobbered it.
+                    j = i+1;
+                } else if (first.tail == TailStrategy::ShiftInwards &&
+                           second.tail == TailStrategy::ShiftInwards) {
+                    // Given two splits:
+                    // X  ->  a * Xo  + Xi
+                    // (splits stuff other than Xo, including Xi)
+                    // Xo ->  b * Xoo + Xoi
+
+                    // Re-write to:
+                    // X  -> ab * Xoo + s0
+                    // s0 ->  a * Xoi + Xi
+                    // (splits on stuff other than Xo, including Xi)
+
+                    // The name Xo went away, because it was legal for it to
+                    // be X before, but not after.
+
+                    first.exact |= second.exact;
+                    second.exact = first.exact;
+                    second.old_var = unique_name('s');
+                    first.outer   = second.outer;
+                    second.outer  = second.inner;
+                    second.inner  = first.inner;
+                    first.inner   = second.old_var;
+                    Expr f = simplify(first.factor * second.factor);
+                    second.factor = first.factor;
+                    first.factor  = f;
+                    // Push the second split back to just after the first
+                    for (size_t k = j; k > i+1; k--) {
+                        std::swap(splits[k], splits[k-1]);
+                    }
+                }
+            }
+        }
+    }
+
     Dim innermost_non_trivial_loop;
     for (const Dim &d : s.dims()) {
         if (d.for_type != ForType::Vectorized &&
@@ -122,22 +195,10 @@ Stmt build_provide_loop_nest(Function f,
             }
 
             if (split.exact) {
-                user_assert(split.tail == TailStrategy::Auto ||
-                            split.tail == TailStrategy::GuardWithIf)
+                user_assert(split.tail == TailStrategy::GuardWithIf)
                     << "When splitting Var " << split.old_var
                     << " the tail strategy must be GuardWithIf or Auto. "
                     << "Anything else may change the meaning of the algorithm\n";
-            }
-
-            TailStrategy tail = split.tail;
-            if (tail == TailStrategy::Auto) {
-                if (split.exact) {
-                    tail = TailStrategy::GuardWithIf;
-                } else if (is_update) {
-                    tail = TailStrategy::RoundUp;
-                } else {
-                    tail = TailStrategy::ShiftInwards;
-                }
             }
 
             if ((iter != known_size_dims.end()) &&
@@ -149,7 +210,7 @@ Stmt build_provide_loop_nest(Function f,
             } else if (is_one(split.factor)) {
                 // The split factor trivially divides the old extent,
                 // but we know nothing new about the outer dimension.
-            } else if (tail == TailStrategy::GuardWithIf) {
+            } else if (split.tail == TailStrategy::GuardWithIf) {
                 // It's an exact split but we failed to prove that the
                 // extent divides the factor. Use predication.
 
@@ -169,7 +230,7 @@ Stmt build_provide_loop_nest(Function f,
                 stmt = IfThenElse::make(cond, stmt, Stmt());
                 stmt = LetStmt::make(rebased_var_name, rebased, stmt);
 
-            } else if (tail == TailStrategy::ShiftInwards) {
+            } else if (split.tail == TailStrategy::ShiftInwards) {
                 // Adjust the base downwards to not compute off the
                 // end of the realization.
 
@@ -184,7 +245,7 @@ Stmt build_provide_loop_nest(Function f,
 
                 base = Min::make(base, old_max + (1 - split.factor));
             } else {
-                internal_assert(tail == TailStrategy::RoundUp);
+                internal_assert(split.tail == TailStrategy::RoundUp);
             }
 
             // Substitute in the new expression for the split variable ...
