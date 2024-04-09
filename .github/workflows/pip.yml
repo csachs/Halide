@@ -11,7 +11,7 @@ on:
     types: [ created ]
 
 env:
-  LLVM_VER: 17.0.6
+  LLVM_VER: 19.0.0
   HALIDE_CMAKE_OPTS: -DCMAKE_BUILD_TYPE=Release -DWITH_DOCS=NO -DWITH_PYTHON_BINDINGS=NO -DWITH_PYTHON_STUBS=NO -DWITH_TESTS=NO -DWITH_TUTORIALS=NO -DWITH_UTILS=NO
   DEV_PREFIX: b
 
@@ -96,7 +96,7 @@ jobs:
         run: >
           cmake -G "Visual Studio 17 2022" -T ClangCL -A "${{ matrix.buildplat[2] }}" -S . -B halide-build
           ${{ env.HALIDE_CMAKE_OPTS }}
-          -DLLVM_DIR=${{ github.workspace }}/local-llvm/lib/cmake/llvm
+          -DLLVM_DIR=${{ github.workspace }}\local-llvm\lib\cmake\llvm
 
       - name: Configure Halide (macOS)
         if: runner.os == 'macOS'
@@ -118,15 +118,15 @@ jobs:
         run: cmake --install halide-build --config Release --prefix local-halide
 
       - name: Build Wheels
-        uses: pypa/cibuildwheel@v2.16.2
+        uses: pypa/cibuildwheel@v2.17.0
         env:
           CMAKE_PREFIX_PATH: ${{ github.workspace }}/local-halide
           CIBW_ARCHS_LINUX: "${{ matrix.buildplat[2] }}"
           CIBW_ARCHS_MACOS: "${{ matrix.buildplat[2] }}"
           CIBW_BUILD: "${{ matrix.python }}-${{ matrix.buildplat[1] }}"
           CIBW_CONFIG_SETTINGS: --global-option=egg_info --global-option=--tag-build=${{ env.DEV_PREFIX }} --global-option=--tag-date
-          CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
-          CIBW_MANYLINUX_AARCH64_IMAGE: quay.io/pypa/manylinux_2_28_aarch64
+          CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_31_x86_64
+          CIBW_MANYLINUX_AARCH64_IMAGE: quay.io/pypa/manylinux_2_31_aarch64
           CIBW_BEFORE_ALL_LINUX: |
             export LLVM_ZST=$(curl --silent https://buildbot.halide-lang.org | grep -o 'llvm-${{ env.LLVM_VER }}-${{ matrix.buildplat[3] }}-.*\.zst') && \
             echo Downloading ${LLVM_ZST}... && \
