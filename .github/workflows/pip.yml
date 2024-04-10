@@ -12,7 +12,7 @@ on:
 
 env:
   LLVM_VER: 19.0.0
-  HALIDE_CMAKE_OPTS: -DCMAKE_BUILD_TYPE=Release -DWITH_DOCS=NO -DWITH_PYTHON_BINDINGS=NO -DWITH_PYTHON_STUBS=NO -DWITH_TESTS=NO -DWITH_TUTORIALS=NO -DWITH_UTILS=NO
+  HALIDE_CMAKE_OPTS: -DCMAKE_BUILD_TYPE=Release -DWITH_DOCS=NO -DWITH_PYTHON_BINDINGS=NO -DWITH_TESTS=NO -DWITH_TUTORIALS=NO -DWITH_UTILS=NO
   DEV_PREFIX: b
 
 permissions:
@@ -74,7 +74,6 @@ jobs:
       # of the commit hash in the name -- this is a little janky but seems to work;
       # we download to /tmp/buildbot.halide-lang.org/llvm-VER-TRIPLE-HASH.zst
       - name: Pull LLVM build
-        if: runner.os != 'Linux'
         shell: bash
         run: |
           rm -rf /tmp/llvm.zst
@@ -82,7 +81,6 @@ jobs:
           curl --output /tmp/llvm.zst https://buildbot.halide-lang.org/${LLVM_ZST}
 
       - name: Decompress LLVM build
-        if: runner.os != 'Linux'
         shell: bash
         run: |
           rm -rf local-llvm
@@ -96,28 +94,30 @@ jobs:
         if: runner.os == 'Windows'
         shell: cmd
         run: >
-          cmake -G "Visual Studio 17 2022" -T ClangCL -A "${{ matrix.buildplat[2] }}" -S . -B halide-build
-          ${{ env.HALIDE_CMAKE_OPTS }}
-          -DLLVM_DIR=${{ github.workspace }}\local-llvm\lib\cmake\llvm
+          cmake -G "Visual Studio 17 2022" -T ClangCL -A "${{ matrix.buildplat[2] }}" -S . -B halide-build ${{ env.HALIDE_CMAKE_OPTS }} -DLLVM_DIR=${{ github.workspace }}\local-llvm\lib\cmake\llvm
 
       - name: Configure Halide (macOS)
         if: runner.os == 'macOS'
         shell: bash
         run: >
-          cmake -S . -B halide-build
-          ${{ env.HALIDE_CMAKE_OPTS }}
-          "-DCMAKE_OSX_ARCHITECTURES=${{ matrix.buildplat[2] }}"
-          -DLLVM_DIR=${{ github.workspace }}/local-llvm/lib/cmake/llvm
+          cmake -S . -B halide-build ${{ env.HALIDE_CMAKE_OPTS }} "-DCMAKE_OSX_ARCHITECTURES=${{ matrix.buildplat[2] }}" -DLLVM_DIR=${{ github.workspace }}/local-llvm/lib/cmake/llvm
+
+          
+      - name: Configure Halide (Linux)
+        if: runner.os == 'linux'
+        shell: bash
+        run: >
+          cmake -S . -B halide-build ${{ env.HALIDE_CMAKE_OPTS }} -DLLVM_DIR=${{ github.workspace }}/local-llvm/lib/cmake/llvm
 
       - name: Build Halide
-        if: runner.os != 'Linux'
         shell: bash
         run: cmake --build halide-build --target install --config Release
 
       - name: Install Halide
-        if: runner.os != 'Linux'
         shell: bash
-        run: cmake --install halide-build --config Release --prefix local-halide
+        env:
+          CMAKE_INSTALL_PREFIX: local-halide
+        run: cmake --install halide-build --config Release
       
 #      - name: Setup tmate session
 #        uses: mxschmitt/action-tmate@v3
@@ -131,21 +131,6 @@ jobs:
           CIBW_ARCHS_MACOS: "${{ matrix.buildplat[2] }}"
           CIBW_BUILD: "${{ matrix.python }}-${{ matrix.buildplat[1] }}"
           CIBW_CONFIG_SETTINGS: --global-option=egg_info --global-option=--tag-build=${{ env.DEV_PREFIX }} --global-option=--tag-date
-          CIBW_BEFORE_ALL_LINUX: |
-            export LLVM_ZST=$(curl --silent https://buildbot.halide-lang.org | grep -o 'llvm-${{ env.LLVM_VER }}-${{ matrix.buildplat[3] }}-.*\.zst') && \
-            echo Downloading ${LLVM_ZST}... && \
-            curl --output /tmp/llvm.zst https://buildbot.halide-lang.org/${LLVM_ZST} && \
-            rm -rf /tmp/local-llvm && \
-            mkdir -p /tmp/local-llvm && \
-            cd /tmp/local-llvm && \
-            echo Extracting /tmp/llvm.zst... && \
-            cmake -E tar x /tmp/llvm.zst --zstd && \
-            cd - && \
-            rm -rf /tmp/llvm.zst && \
-            echo Configuring CMake... && \
-            cmake -S . -B halide-build ${{ env.HALIDE_CMAKE_OPTS }} -DLLVM_DIR=/tmp/local-llvm/lib/cmake/llvm && \
-            cmake --build halide-build --target install --config Release && \
-            cmake --install halide-build --config Release --prefix local-halide
 
       - uses: actions/upload-artifact@v4
         with:
