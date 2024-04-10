@@ -109,7 +109,7 @@ jobs:
           echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy-backports main multiverse universe" | sudo tee -a /etc/apt/sources.list
           echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy-updates main multiverse universe" | sudo tee -a /etc/apt/sources.list
           sudo dpkg --add-architecture arm64
-          sudo apt update -o APT::Architecture="arm64" -o APT::Architectures="arm64" -O Acquire::http::Timeout="2";
+          sudo apt update -o APT::Architecture="arm64" -o APT::Architectures="arm64" -o Acquire::http::Timeout="2" || true
           sudo apt install -y libc6:arm64 libgcc-s1:arm64
 
       - name: Configure Halide (Linux)
