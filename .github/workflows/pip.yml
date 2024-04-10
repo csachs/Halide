@@ -40,11 +40,11 @@ jobs:
         python: [ cp38 ]
         buildplat:
         # [runner, pytag, arch, halide-triple]
-        #- [ubuntu-22.04, manylinux_x86_64, x86_64, x86-64-linux]
+        - [ubuntu-22.04, manylinux_x86_64, x86_64, x86-64-linux]
         #- [ubuntu-22.04, manylinux_aarch64, aarch64, arm-64-linux]
-        #- [macos-12, macosx_x86_64, x86_64, x86-64-osx]
-        - [macos-12, macosx_arm64, arm64, arm-64-osx]
-        - [windows-2022, win_amd64, x64, x86-64-windows]
+        - [macos-14, macosx_x86_64, x86_64, x86-64-osx]
+        - [macos-14-arm, macosx_arm64, arm64, arm-64-osx]
+        #- [windows-2022, win_amd64, x64, x86-64-windows]
 
     steps:
       - uses: actions/checkout@v4
@@ -109,11 +109,6 @@ jobs:
           "-DCMAKE_OSX_ARCHITECTURES=${{ matrix.buildplat[2] }}"
           -DLLVM_DIR=${{ github.workspace }}/local-llvm/lib/cmake/llvm
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: runner.os == 'macOS'
-
-
       - name: Build Halide
         if: runner.os != 'Linux'
         shell: bash
@@ -123,6 +118,10 @@ jobs:
         if: runner.os != 'Linux'
         shell: bash
         run: cmake --install halide-build --config Release --prefix local-halide
+      
+#      - name: Setup tmate session
+#        uses: mxschmitt/action-tmate@v3
+#        if: runner.os == 'Linux'
 
       - name: Build Wheels
         uses: pypa/cibuildwheel@v2.17.0
@@ -152,7 +151,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: wheels
+          name: "wheels-${{ matrix.python }}-${{ matrix.buildplat[3] }}"
           path: ./wheelhouse/*.whl
 
   # publish:
