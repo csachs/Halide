@@ -135,13 +135,13 @@ jobs:
       - name: Build Wheels
         uses: pypa/cibuildwheel@v2.17.0
         env:
-          CMAKE_PREFIX_PATH: ${{ github.workspace }}/local-halide
-          SKBUILD_CMAKE_ARGS: -DHalide_DIR=${{ github.workspace }}/local-halide/lib/cmake/llvm
+          CMAKE_PREFIX_PATH: local-halide
+          SKBUILD_CMAKE_ARGS: -DHalide_DIR=local-halide/lib/cmake/llvm
           CIBW_ARCHS_LINUX: "${{ matrix.buildplat[2] }}"
           CIBW_ARCHS_MACOS: "${{ matrix.buildplat[2] }}"
           CIBW_BUILD: "${{ matrix.python }}-${{ matrix.buildplat[1] }}"
           CIBW_CONFIG_SETTINGS: --global-option=egg_info --global-option=--tag-build=${{ env.DEV_PREFIX }} --global-option=--tag-date
-          CIBW_BEFORE_ALL: find ${{ github.workspace }}/local-halide; find .
+          CIBW_BEFORE_ALL: cp -R local-halide/include python_bindings/; sed -i 's/python_requires=/package_data=\{"halide":"python_bindings\/include\/*"\}, include_package_data=True, python_requires=/g' setup.py
 
       - uses: actions/upload-artifact@v4
         with:
