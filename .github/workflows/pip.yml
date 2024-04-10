@@ -91,9 +91,8 @@ jobs:
           cmake -E tar xv /tmp/llvm.zst --zstd
           rm -rf /tmp/llvm.zst
 
-      - name: Setup Debug Session
-        uses: csexton/debugger-action@master
-
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
 
       - name: Configure Halide (Windows)
         if: runner.os == 'Windows'
