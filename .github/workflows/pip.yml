@@ -92,12 +92,9 @@ jobs:
           cd ..
           rm -rf /tmp/llvm.zst
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-
       - name: Configure Halide (Windows)
         if: runner.os == 'Windows'
-        shell: bash
+        shell: cmd
         run: >
           cmake -G "Visual Studio 17 2022" -T ClangCL -A "${{ matrix.buildplat[2] }}" -S . -B halide-build
           ${{ env.HALIDE_CMAKE_OPTS }}
@@ -111,6 +108,11 @@ jobs:
           ${{ env.HALIDE_CMAKE_OPTS }}
           "-DCMAKE_OSX_ARCHITECTURES=${{ matrix.buildplat[2] }}"
           -DLLVM_DIR=${{ github.workspace }}/local-llvm/lib/cmake/llvm
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: runner.os == 'macOS'
+
 
       - name: Build Halide
         if: runner.os != 'Linux'
