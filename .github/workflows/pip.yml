@@ -108,7 +108,7 @@ jobs:
           echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy-backports main multiverse universe" | sudo tee -a /etc/apt/sources.list
           echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy-updates main multiverse universe" | sudo tee -a /etc/apt/sources.list
           sudo apt update
-          sudo apt install libc6:arm64
+          sudo apt install libc6:arm64 libgcc-s1:arm64
 
       - name: Configure Halide (Linux)
         if: runner.os == 'linux'
