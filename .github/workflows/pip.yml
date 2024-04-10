@@ -35,14 +35,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: [ cp38, cp39, cp310, cp311, cp312 ]
+        #python: [ cp38, cp39, cp310, cp311, cp312 ]
         #python: [ cp311 ]
+        python: [ cp38 ]
         buildplat:
         # [runner, pytag, arch, halide-triple]
         #- [ubuntu-22.04, manylinux_x86_64, x86_64, x86-64-linux]
         #- [ubuntu-22.04, manylinux_aarch64, aarch64, arm-64-linux]
-        - [macos-12, macosx_x86_64, x86_64, x86-64-osx]
-        - [macos-12, macosx_arm64, arm64, arm-64-osx]
+        #- [macos-12, macosx_x86_64, x86_64, x86-64-osx]
+        #- [macos-12, macosx_arm64, arm64, arm-64-osx]
         - [windows-2022, win_amd64, x64, x86-64-windows]
 
     steps:
@@ -89,6 +90,10 @@ jobs:
           cd ${{ github.workspace }}/local-llvm
           cmake -E tar xv /tmp/llvm.zst --zstd
           rm -rf /tmp/llvm.zst
+
+      - name: Setup Debug Session
+        uses: csexton/debugger-action@master
+
 
       - name: Configure Halide (Windows)
         if: runner.os == 'Windows'
