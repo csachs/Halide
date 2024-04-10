@@ -12,7 +12,7 @@ on:
 
 env:
   LLVM_VER: 19.0.0
-  HALIDE_CMAKE_OPTS: -DCMAKE_BUILD_TYPE=Release -DWITH_DOCS=NO -DWITH_PYTHON_BINDINGS=NO -DWITH_TESTS=NO -DWITH_TUTORIALS=NO -DWITH_UTILS=NO
+  HALIDE_CMAKE_OPTS: -DCMAKE_BUILD_TYPE=Release -DWITH_DOCS=NO -DWITH_PYTHON_BINDINGS=NO -DWITH_TESTS=NO -DWITH_TUTORIALS=NO -DWITH_UTILS=NO -DCMAKE_INSTALL_PREFIX=local-halide
   DEV_PREFIX: b
 
 permissions:
@@ -103,9 +103,9 @@ jobs:
       - name: Install ARM64 Cross-compiling infrastructure (Linux)
         if: matrix.buildplat[3] == 'arm-64-linux'
         run: |
-          dpkg --add-architecture arm64
-          apt update
-          apt install libc6:arm64
+          sudo dpkg --add-architecture arm64
+          sudo apt update
+          sudo apt install libc6:arm64
 
       - name: Configure Halide (Linux)
         if: runner.os == 'linux'
@@ -115,11 +115,11 @@ jobs:
 
       - name: Build Halide
         shell: bash
-        run: cmake --build halide-build --target install --config Release -DCMAKE_INSTALL_PREFIX=local-halide
+        run: cmake --build halide-build --target install --config Release
 
       - name: Install Halide
         shell: bash
-        run: cmake --install halide-build --config Release -DCMAKE_INSTALL_PREFIX=local-halide
+        run: cmake --install halide-build --config Release
       
 #      - name: Setup tmate session
 #        uses: mxschmitt/action-tmate@v3
