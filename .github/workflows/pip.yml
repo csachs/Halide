@@ -40,7 +40,8 @@ jobs:
         python: [ cp38 ]
         buildplat:
         # [runner, pytag, arch, halide-triple]
-        - [ubuntu-22.04, manylinux_x86_64, x86_64, x86-64-linux]
+        #- [ubuntu-22.04, manylinux_x86_64, x86_64, x86-64-linux]
+        - [ubuntu-22.04, musllinux_x86_64, x86_64, x86-64-linux]
         #- [ubuntu-22.04, manylinux_aarch64, aarch64, arm-64-linux]
         - [macos-14, macosx_x86_64, x86_64, x86-64-osx]
         - [macos-14-arm, macosx_arm64, arm64, arm-64-osx]
