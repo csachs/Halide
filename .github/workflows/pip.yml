@@ -104,6 +104,9 @@ jobs:
         if: matrix.buildplat[3] == 'arm-64-linux'
         run: |
           sudo apt update
+          cat /etc/apt/sources.list
+          ls /etc/apt/sources.list.d
+          cat /etc/apt/sources.list.d/*
           echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy main multiverse universe" | sudo tee -a /etc/apt/sources.list
           echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy-security main multiverse universe" | sudo tee -a /etc/apt/sources.list
           echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy-backports main multiverse universe" | sudo tee -a /etc/apt/sources.list
