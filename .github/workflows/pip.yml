@@ -85,9 +85,10 @@ jobs:
         if: runner.os != 'Linux'
         shell: bash
         run: |
-          rm -rf ${{ github.workspace }}/local-llvm
-          mkdir -p ${{ github.workspace }}/local-llvm
-          cd ${{ github.workspace }}/local-llvm
+          WORKSPACE=`pwd`
+          rm -rf ${{ WORKSPACE }}/local-llvm
+          mkdir -p ${{ WORKSPACE }}/local-llvm
+          cd ${{ WORKSPACE }}/local-llvm
           cmake -E tar xv /tmp/llvm.zst --zstd
           rm -rf /tmp/llvm.zst
 
@@ -100,8 +101,7 @@ jobs:
         run: >
           cmake -G "Visual Studio 17 2022" -T ClangCL -A "${{ matrix.buildplat[2] }}" -S . -B halide-build
           ${{ env.HALIDE_CMAKE_OPTS }}
-          -DLLVM_DIR=${{ github.workspace }}/local-llvm
-          #\lib\cmake\llvm
+          -DLLVM_DIR=${{ github.workspace }}\local-llvm\lib\cmake\llvm
 
       - name: Configure Halide (macOS)
         if: runner.os == 'macOS'
