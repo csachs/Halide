@@ -44,7 +44,7 @@ jobs:
         - [ubuntu-22.04, musllinux_aarch64, aarch64, arm-64-linux]
         - [macos-13, macosx_x86_64, x86_64, x86-64-osx]
         - [macos-14, macosx_arm64, arm64, arm-64-osx]
-        - [windows-2022, win_amd64, x64, x86-64-windows]
+        #- [windows-2022, win_amd64, x64, x86-64-windows]
 
     steps:
       - uses: actions/checkout@v4
@@ -67,8 +67,6 @@ jobs:
       - name: Set up QEMU
         if: runner.os == 'Linux'
         uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
 
       # We are doing a "wildcard" download so that we can grab the build regardless
       # of the commit hash in the name -- this is a little janky but seems to work;
@@ -102,7 +100,13 @@ jobs:
         run: >
           cmake -S . -B halide-build ${{ env.HALIDE_CMAKE_OPTS }} "-DCMAKE_OSX_ARCHITECTURES=${{ matrix.buildplat[2] }}" -DLLVM_DIR=${{ github.workspace }}/local-llvm/lib/cmake/llvm
 
-          
+      - name: Install ARM64 Cross-compiling infrastructure (Linux)
+        if: matrix.buildplat[3] == 'arm-64-linux'
+        run: |
+          dpkg --add-architecture arm64
+          apt update
+          apt install libc6:arm64
+
       - name: Configure Halide (Linux)
         if: runner.os == 'linux'
         shell: bash
@@ -111,13 +115,11 @@ jobs:
 
       - name: Build Halide
         shell: bash
-        run: cmake --build halide-build --target install --config Release
+        run: cmake --build halide-build --target install --config Release -DCMAKE_INSTALL_PREFIX=local-halide
 
       - name: Install Halide
         shell: bash
-        env:
-          CMAKE_INSTALL_PREFIX: local-halide
-        run: cmake --install halide-build --config Release
+        run: cmake --install halide-build --config Release -DCMAKE_INSTALL_PREFIX=local-halide
       
 #      - name: Setup tmate session
 #        uses: mxschmitt/action-tmate@v3
