@@ -42,9 +42,10 @@ jobs:
         # [runner, pytag, arch, halide-triple]
         #- [ubuntu-22.04, manylinux_x86_64, x86_64, x86-64-linux]
         - [ubuntu-22.04, musllinux_x86_64, x86_64, x86-64-linux]
+        - [ubuntu-22.04, musllinux_xaarch64, aarch64, arm-64-linux]
         #- [ubuntu-22.04, manylinux_aarch64, aarch64, arm-64-linux]
-        - [macos-14, macosx_x86_64, x86_64, x86-64-osx]
-        - [macos-14-arm, macosx_arm64, arm64, arm-64-osx]
+        - [macos-13, macosx_x86_64, x86_64, x86-64-osx]
+        - [macos-14, macosx_arm64, arm64, arm-64-osx]
         #- [windows-2022, win_amd64, x64, x86-64-windows]
 
     steps:
@@ -132,8 +133,6 @@ jobs:
           CIBW_ARCHS_MACOS: "${{ matrix.buildplat[2] }}"
           CIBW_BUILD: "${{ matrix.python }}-${{ matrix.buildplat[1] }}"
           CIBW_CONFIG_SETTINGS: --global-option=egg_info --global-option=--tag-build=${{ env.DEV_PREFIX }} --global-option=--tag-date
-          CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_31_x86_64
-          CIBW_MANYLINUX_AARCH64_IMAGE: quay.io/pypa/manylinux_2_31_aarch64
           CIBW_BEFORE_ALL_LINUX: |
             export LLVM_ZST=$(curl --silent https://buildbot.halide-lang.org | grep -o 'llvm-${{ env.LLVM_VER }}-${{ matrix.buildplat[3] }}-.*\.zst') && \
             echo Downloading ${LLVM_ZST}... && \
