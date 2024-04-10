@@ -85,11 +85,11 @@ jobs:
         if: runner.os != 'Linux'
         shell: bash
         run: |
-          WORKSPACE=`pwd`
-          rm -rf ${{ WORKSPACE }}/local-llvm
-          mkdir -p ${{ WORKSPACE }}/local-llvm
-          cd ${{ WORKSPACE }}/local-llvm
+          rm -rf local-llvm
+          mkdir -p local-llvm
+          cd local-llvm
           cmake -E tar xv /tmp/llvm.zst --zstd
+          cd ..
           rm -rf /tmp/llvm.zst
 
       - name: Setup tmate session
