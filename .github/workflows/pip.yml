@@ -141,7 +141,7 @@ jobs:
           CIBW_ARCHS_MACOS: "${{ matrix.buildplat[2] }}"
           CIBW_BUILD: "${{ matrix.python }}-${{ matrix.buildplat[1] }}"
           CIBW_CONFIG_SETTINGS: --global-option=egg_info --global-option=--tag-build=${{ env.DEV_PREFIX }} --global-option=--tag-date
-          CIBW_BEFORE_ALL: cp -R local-halide/include python_bindings/; sed -i 's/python_requires=/package_data=\{"halide":"python_bindings\/include\/*"\}, include_package_data=True, python_requires=/g' setup.py
+          CIBW_BEFORE_ALL: cp -R local-halide/include python_bindings/; sed -i 's/python_requires=/package_data=\{"halide":["python_bindings\/include\/*"]\}, include_package_data=True, python_requires=/g' setup.py
 
       - uses: actions/upload-artifact@v4
         with:
